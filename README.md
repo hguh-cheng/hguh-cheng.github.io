@@ -33,19 +33,6 @@ Advance with **Next / Prev** (or the arrow keys), jump with the move-dots, pick 
 branch at the fork, or press **Play** (spacebar). Everything is self-contained —
 no build step and no external JavaScript libraries.
 
-## Deploy to GitHub Pages
-
-1. Copy the contents of this folder into the **root** of your repository
-   (`index.html`, the five `*.js` files, `states.js`, and `.nojekyll`).
-2. Commit and push to your default branch (e.g. `main`).
-3. In the repo, go to **Settings → Pages**, set **Source = Deploy from a branch**,
-   choose your branch and the **`/ (root)`** folder, and save.
-4. Wait ~1 minute; your site is live at
-   `https://<your-username>.github.io/<your-repo>/`.
-
-That's it — no other configuration is needed. (The included `.nojekyll` file just
-tells Pages to serve the files verbatim.)
-
 ## Files
 
 | File | Purpose |
