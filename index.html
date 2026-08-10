@@ -1,16 +1,319 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>hguh-cheng</title>
-  <style>
-    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 4rem auto; padding: 0 1rem; line-height: 1.6; }
-    h1 { color: #1a1a1a; }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Deforming a Schubert intersection · A Geometric Littlewood–Richardson Rule</title>
+<meta name="description" content="Step through Vakil's geometric Littlewood–Richardson rule on the Grassmannian G(2,4): watch two flags in projective 3-space degenerate and a Schubert intersection break into two Schubert varieties." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e1218'/%3E%3Ccircle cx='11.5' cy='11.5' r='5' fill='%23e6ecf2'/%3E%3Ccircle cx='21' cy='21' r='5' fill='none' stroke='%23e7a13a' stroke-width='2.6'/%3E%3C/svg%3E" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  /* slate ground + cool paper + amber criticality + two branch colours */
+  --ground:#0e1218;        /* cool near-black slate */
+  --ground-2:#141a22;      /* raised slate panel */
+  --ground-3:#1b232d;      /* hover / inset */
+  --hair:#28323f;          /* hairline on dark */
+  --hair-2:#333f4e;
+  --chalk:#e6ecf2;         /* primary text on dark */
+  --chalk-dim:#aab6c2;     /* secondary */
+  --muted:#6f7d8c;         /* tertiary / gridlines */
+  --paper:#eceef1;         /* cool paper for the board face */
+  --paper-line:#c9cfd6;    /* board grid */
+  --paper-ink:#161b22;     /* ink on paper */
+
+  --amber:#e7a13a;         /* the ACTIVE degeneration / criticality */
+  --amber-soft:rgba(231,161,58,0.16);
+  --amber-line:rgba(231,161,58,0.5);
+
+  --A:#d02a58;             /* branch A — crimson — partition (2) lines through a point */
+  --A-soft:rgba(208,42,88,0.14);
+  --B:#2f74d0;             /* branch B — indigo — partition (1,1) lines in a plane */
+  --B-soft:rgba(47,116,208,0.14);
+
+  --focus:#8ad0ff;
+
+  --shadow:0 1px 0 rgba(255,255,255,0.03), 0 18px 40px -24px rgba(0,0,0,0.8);
+  --r:14px; --r-sm:9px;
+  --maxw:1240px;
+
+  --fs-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --fs-serif:'Spectral',Georgia,'Times New Roman',serif;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--ground); color:var(--chalk);
+  font-family:var(--fs-serif); font-weight:400; font-size:17px; line-height:1.55;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  background-image:
+    radial-gradient(1200px 620px at 82% -8%, rgba(47,116,208,0.10), transparent 60%),
+    radial-gradient(1000px 560px at 8% 108%, rgba(208,42,88,0.08), transparent 62%);
+  background-attachment:fixed;
+}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 clamp(16px,3.5vw,40px)}
+
+/* ---------- header ---------- */
+header.masthead{padding:clamp(30px,6vw,68px) 0 clamp(18px,3vw,26px)}
+.eyebrow{
+  font-family:var(--fs-mono); font-size:11.5px; letter-spacing:.26em; text-transform:uppercase;
+  color:var(--amber); margin:0 0 18px; display:flex; align-items:center; gap:12px; font-weight:500;
+}
+.eyebrow::after{content:""; height:1px; flex:1; background:linear-gradient(90deg,var(--amber-line),transparent)}
+h1.title{
+  font-weight:600; font-size:clamp(30px,5.4vw,58px); line-height:1.02; letter-spacing:-0.02em;
+  margin:0 0 .5em; max-width:16ch;
+}
+h1.title em{font-style:italic; color:var(--chalk-dim); font-weight:400}
+.dek{font-size:clamp(16px,1.9vw,20px); color:var(--chalk-dim); max-width:60ch; font-weight:300; margin:0}
+.dek b{color:var(--chalk); font-weight:500}
+.attrib{margin-top:22px; font-family:var(--fs-mono); font-size:12px; letter-spacing:.02em; color:var(--muted)}
+.attrib a{color:var(--chalk-dim); text-decoration:none; border-bottom:1px solid var(--hair-2)}
+.attrib a:hover{color:var(--amber); border-color:var(--amber-line)}
+
+/* the class equation, rendered as a "result strip" */
+.result{
+  margin:26px 0 0; padding:16px 20px; border:1px solid var(--hair); border-radius:var(--r);
+  background:linear-gradient(180deg,var(--ground-2),rgba(20,26,34,0.4));
+  display:flex; flex-wrap:wrap; align-items:center; gap:10px 22px; box-shadow:var(--shadow);
+}
+.result .lead{font-family:var(--fs-mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted)}
+.result .m{font-size:1.16em}
+
+/* lightweight inline math (no external typesetter) */
+.m{font-family:var(--fs-serif); font-style:italic; font-size:1.05em; white-space:nowrap; letter-spacing:.01em}
+.m sub{font-style:normal; font-size:.72em; letter-spacing:0}
+.m .op{font-style:normal; padding:0 .18em; color:var(--chalk-dim)}
+.m .set{font-style:normal; font-family:var(--fs-mono); font-size:.86em}
+.m .parn{font-style:normal}
+
+/* ---------- main grid ---------- */
+main{padding:clamp(20px,3vw,34px) 0 90px}
+.stage{
+  display:grid; gap:18px;
+  grid-template-columns:minmax(0,0.86fr) minmax(0,1.14fr);
+  grid-template-areas:"board flag" "caption caption" "transport transport" "tree tree";
+}
+@media (max-width:940px){
+  .stage{grid-template-columns:1fr; grid-template-areas:"board" "flag" "caption" "transport" "tree"}
+}
+.panel{
+  background:linear-gradient(180deg,var(--ground-2),rgba(18,23,30,0.7));
+  border:1px solid var(--hair); border-radius:var(--r); box-shadow:var(--shadow);
+  position:relative; overflow:hidden;
+}
+.panel > .phead{
+  display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+  padding:14px 18px 0;
+}
+.phead .ptitle{font-family:var(--fs-mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--chalk-dim); font-weight:500}
+.phead .pmeta{font-family:var(--fs-mono); font-size:11px; color:var(--muted)}
+
+#board-panel{grid-area:board}
+#flag-panel{grid-area:flag}
+
+/* board + flag drawing areas */
+.draw{width:100%; display:block}
+#board-panel .draw{padding:10px 14px 16px}
+#flag-panel .draw{padding:4px 8px 10px}
+
+/* board legend row */
+.legend{
+  display:flex; flex-wrap:wrap; gap:14px 18px; padding:0 18px 16px; margin-top:2px;
+  font-family:var(--fs-mono); font-size:11.5px; color:var(--chalk-dim);
+}
+.legend .item{display:flex; align-items:center; gap:7px}
+.swatch{width:13px; height:13px; border-radius:3px; flex:none}
+.swatch.black{background:var(--paper-ink); border:1px solid #000}
+.swatch.white{background:#fff; border:1.5px solid var(--paper-ink)}
+.swatch.crit{background:var(--amber-soft); border:1px solid var(--amber-line)}
+.dot-mini{width:11px;height:11px;border-radius:50%;flex:none}
+
+/* ---------- caption ---------- */
+#caption{
+  grid-area:caption; border:1px solid var(--hair); border-radius:var(--r);
+  background:linear-gradient(180deg,var(--ground-2),rgba(18,23,30,0.55));
+  padding:18px 22px; box-shadow:var(--shadow); min-height:104px;
+}
+#caption .cap-step{font-family:var(--fs-mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--amber); margin-bottom:8px; display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+#caption .cap-step .tag{padding:2px 8px; border:1px solid var(--amber-line); border-radius:20px; color:var(--amber); font-size:10px}
+#caption .cap-body{font-size:16.5px; color:var(--chalk); max-width:74ch; font-weight:300}
+#caption .cap-body b{font-weight:500; color:#fff}
+#caption .cap-math{margin-top:10px; color:var(--chalk-dim); font-size:15px}
+
+/* ---------- transport ---------- */
+#transport{grid-area:transport; display:flex; flex-direction:column; gap:14px}
+.transport-row{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  padding:14px 16px; border:1px solid var(--hair); border-radius:var(--r);
+  background:var(--ground-2); box-shadow:var(--shadow);
+}
+button{font-family:var(--fs-mono); cursor:pointer; color:var(--chalk); background:var(--ground-3);
+  border:1px solid var(--hair-2); border-radius:var(--r-sm); padding:9px 15px; font-size:13px;
+  letter-spacing:.03em; transition:background .15s, border-color .15s, transform .05s, color .15s;}
+button:hover:not(:disabled){background:#222c37; border-color:var(--muted)}
+button:active:not(:disabled){transform:translateY(1px)}
+button:disabled{opacity:.36; cursor:not-allowed}
+button:focus-visible{outline:2.5px solid var(--focus); outline-offset:2px}
+button.primary{background:var(--amber); color:#1a1206; border-color:var(--amber); font-weight:600}
+button.primary:hover:not(:disabled){background:#f0ac48}
+button.ghost{background:transparent}
+.btn-ico{font-size:14px; line-height:1}
+
+.movedots{display:flex; align-items:center; gap:7px; flex:1; min-width:180px; flex-wrap:wrap}
+.movedots .lbl{font-family:var(--fs-mono); font-size:11px; color:var(--muted); letter-spacing:.14em; text-transform:uppercase; margin-right:4px}
+.mdot{width:26px; height:26px; border-radius:7px; border:1px solid var(--hair-2); background:var(--ground-3);
+  font-family:var(--fs-mono); font-size:11px; color:var(--chalk-dim); display:grid; place-items:center; cursor:pointer;
+  transition:all .14s; padding:0}
+.mdot:hover{border-color:var(--muted); color:var(--chalk)}
+.mdot.done{color:var(--chalk)}
+.mdot.current{background:var(--amber); color:#1a1206; border-color:var(--amber); font-weight:600}
+.mdot.branch{box-shadow:inset 0 0 0 1px var(--amber-line)}
+.mdot.onA{border-color:var(--A)}
+.mdot.onB{border-color:var(--B)}
+
+/* branch chooser */
+.branch-choice{
+  display:flex; gap:12px; flex-wrap:wrap; align-items:center;
+  padding:14px 16px; border:1px dashed var(--amber-line); border-radius:var(--r);
+  background:var(--amber-soft);
+}
+.branch-choice .bc-label{font-family:var(--fs-mono); font-size:11.5px; letter-spacing:.06em; color:var(--amber); flex:1; min-width:200px}
+.branch-choice .bc-label b{color:#fff; font-weight:600}
+button.choice{font-size:13.5px; padding:11px 18px; font-weight:600; color:#fff}
+button.choiceA{background:var(--A); border-color:var(--A)}
+button.choiceA:hover{background:#e13a66}
+button.choiceB{background:var(--B); border-color:var(--B)}
+button.choiceB:hover{background:#4285e0}
+button.choice .sub{font-weight:400; opacity:.85; font-size:11px; display:block; margin-top:1px}
+.branch-choice.hidden{display:none}
+
+.speed{display:flex; align-items:center; gap:8px; font-family:var(--fs-mono); font-size:11px; color:var(--muted)}
+.speed input{accent-color:var(--amber)}
+
+/* ---------- tree ---------- */
+#tree-panel{grid-area:tree}
+#tree-panel .phead{padding-bottom:6px}
+.tree-scroll{overflow-x:auto; padding:6px 18px 20px}
+.tree-note{padding:0 18px 14px; color:var(--muted); font-size:14px; font-weight:300; max-width:80ch}
+.tree-note b{color:var(--chalk-dim); font-weight:500}
+
+/* SVG shared bits */
+svg text{font-family:var(--fs-mono)}
+.cell-coord{fill:var(--muted); font-size:9px}
+
+/* footer */
+footer{border-top:1px solid var(--hair); margin-top:20px; padding:26px 0 60px; color:var(--muted); font-size:13.5px; font-weight:300}
+footer .wrap{display:flex; gap:24px 40px; flex-wrap:wrap; justify-content:space-between; align-items:flex-start}
+footer b{color:var(--chalk-dim); font-weight:500}
+footer a{color:var(--chalk-dim); text-decoration:none; border-bottom:1px solid var(--hair-2)}
+footer a:hover{color:var(--amber)}
+.foot-cite{max-width:52ch; font-family:var(--fs-mono); font-size:12px; line-height:1.7}
+
+/* util */
+.mono{font-family:var(--fs-mono)}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+
+@media (prefers-reduced-motion: reduce){
+  *{transition-duration:.001ms !important; animation-duration:.001ms !important}
+}
+</style>
 </head>
 <body>
-  <h1>Hi</h1>
-  <p>yo</p>
+<a class="sr" href="#transport">Skip to controls</a>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Schubert calculus · a worked degeneration</p>
+    <h1 class="title">Two flags collide, <em>and an intersection splits in two</em></h1>
+    <p class="dek">A step-by-step tour of the <b>geometric Littlewood–Richardson rule</b> on the Grassmannian <span class="mono">G(2,4)</span> — the lines of projective 3-space. We start with the lines meeting <b>two skew lines</b>, then let one flag drift into the other. Watch the cycle stay whole, then break cleanly into two Schubert varieties.</p>
+    <p class="attrib">After Ravi Vakil, <a href="https://arxiv.org/abs/math/0302294" target="_blank" rel="noopener">“A Geometric Littlewood–Richardson Rule”</a> — Figure 3 &amp; Figure 2, the case <span class="mono">n=4, k=2, α=β={2,4}</span>.</p>
+    <div class="result" id="result-strip" aria-label="The computed product of Schubert classes"></div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="stage">
+
+      <section class="panel" id="board-panel" aria-labelledby="board-title">
+        <div class="phead">
+          <span class="ptitle" id="board-title">Checkerboard</span>
+          <span class="pmeta" id="board-perm">σ = 4321</span>
+        </div>
+        <svg class="draw" id="board-svg" viewBox="0 0 380 380" role="img" aria-label="Checker configuration"></svg>
+        <div class="legend">
+          <span class="item"><span class="swatch black"></span> black · two flags</span>
+          <span class="item"><span class="swatch white"></span> white · the k-plane</span>
+          <span class="item"><span class="swatch crit"></span> critical row / diagonal</span>
+        </div>
+      </section>
+
+      <section class="panel" id="flag-panel" aria-labelledby="flag-title">
+        <div class="phead">
+          <span class="ptitle" id="flag-title">Flags in ℙ³</span>
+          <span class="pmeta" id="flag-meta">moving vs. fixed</span>
+        </div>
+        <svg class="draw" id="flag-svg" viewBox="0 0 520 400" role="img" aria-label="Moving and fixed flags in projective 3-space"></svg>
+      </section>
+
+      <section id="caption" aria-live="polite">
+        <div class="cap-step" id="cap-step"></div>
+        <div class="cap-body" id="cap-body"></div>
+        <div class="cap-math" id="cap-math"></div>
+      </section>
+
+      <section id="transport">
+        <div class="transport-row">
+          <button id="btn-restart" class="ghost" title="Back to the start"><span class="btn-ico">⤺</span> Restart</button>
+          <button id="btn-prev" title="Previous move"><span class="btn-ico">◀</span> Prev</button>
+          <button id="btn-next" class="primary" title="Next move">Next <span class="btn-ico">▶</span></button>
+          <div class="movedots" id="movedots" role="group" aria-label="Jump to move"></div>
+          <div class="speed">
+            <button id="btn-play" class="ghost" title="Play through this branch">▷ Play</button>
+          </div>
+        </div>
+        <div class="branch-choice hidden" id="branch-choice">
+          <div class="bc-label" id="bc-label"></div>
+        </div>
+      </section>
+
+      <section class="panel" id="tree-panel" aria-labelledby="tree-title">
+        <div class="phead">
+          <span class="ptitle" id="tree-title">The checkergame tree</span>
+          <span class="pmeta">root → leaves</span>
+        </div>
+        <p class="tree-note" id="tree-note">Each leaf is a Schubert variety; the Littlewood–Richardson coefficient counts the leaves of a given type. Here the tree has a single fork — so each coefficient is <b>1</b>.</p>
+        <div class="tree-scroll">
+          <svg id="tree-svg" role="img" aria-label="Binary tree of the checkergame"></svg>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-cite">
+      Ravi Vakil, <i>A Geometric Littlewood–Richardson Rule</i>, Annals of Mathematics (2006). Revised 15 Feb 2005. Figure 3 traces the degeneration; Figure 2 shows the specialization order for <span class="mono">n=4</span>.
+    </div>
+    <div>
+      <b>How to read it.</b> Advance one move at a time. The board and the ℙ³ picture show the same state two ways. At the fork, pick a branch — or let it play.
+    </div>
+  </div>
+</footer>
+
+<script src="states.js"></script>
+<script src="app.js"></script>
+<script src="app-board.js"></script>
+<script src="app-geom.js"></script>
+<script src="app-tree.js"></script>
+<script src="app-main.js"></script>
 </body>
 </html>
